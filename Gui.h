@@ -1,7 +1,7 @@
 /************************************************************************************
  * @file Gui.h
  *
- * @brief GUI for SFML using C++
+ * @brief GUI class
  *
  * @author Vladimir Milivojevic
  *
