@@ -219,14 +219,12 @@ namespace gui
 		sf::Font* font;
 		sf::VertexArray lines;
 		sf::Color lineColor, pointsColor;
-		sf::Text loadingText;
 		std::vector<sf::Text*> text;
 		std::vector<sf::CircleShape*> points;
 		std::vector<sf::Vector2f> pointsPositions;
 		std::vector<float> inputVectorX, inputVectorY;		
 		int numberOfPoints;
 		float spacing, margin, minY, maxY, minX, maxX, x, y, width, height;
-		bool isLoading;
 		// Init
 		void initVariables(float x, float y, float height, float width, float margin, std::vector<float> inputVectorX, std::vector<float> inputVectorY);
 		void initBackground(sf::Color color, sf::Color color2);
@@ -243,13 +241,11 @@ namespace gui
 
 		// Set
 		void setPosition(float x, float y);
-		void setLoading(bool value);
 		void setBackgroundColor(sf::Color background, sf::Color margin);
 		void setOutline(sf::Color outline, float thickness);
 		void setGraphColor(sf::Color line, sf::Color points);
 
 		// Get
-		const bool getLoading();
 		sf::Vector2f getPosition();
 		
 		void clearGraph();

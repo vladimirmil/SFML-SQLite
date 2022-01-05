@@ -788,8 +788,6 @@ void gui::Graph::initGraph()
 
 gui::Graph::Graph(sf::Font * font, std::string title, float x, float y, float width, float height, float margin)
 {
-	
-	this->isLoading = true;
 	this->x = x;
 	this->y = y;
 	this->height = height;
@@ -798,15 +796,6 @@ gui::Graph::Graph(sf::Font * font, std::string title, float x, float y, float wi
 	this->initBackground(sf::Color(36, 52, 62, 255), sf::Color(38, 54, 64, 255));
 	this->font = font;
 	this->initText(font, title);
-
-	this->loadingText.setFont(*this->font);
-	this->loadingText.setCharacterSize(18);
-	this->loadingText.setFillColor(sf::Color::White);
-	this->loadingText.setString("Loading...");
-	this->loadingText.setPosition(sf::Vector2f(
-		this->background.getPosition().x + (int)(this->background.getGlobalBounds().width / 2) - (int)this->loadingText.getGlobalBounds().width / 2 - 3,
-		this->background.getPosition().y + (int)(this->background.getGlobalBounds().height / 2) - (int)this->loadingText.getGlobalBounds().height / 2 - 3
-	));
 }
 
 gui::Graph::Graph(sf::Font * font, std::string title, std::vector<float> inputVectorY, float max, float min, float x, float y, float width, float height, float margin)
@@ -875,11 +864,6 @@ gui::Graph::~Graph()
 		delete text[i];
 }
 
-const bool gui::Graph::getLoading()
-{
-	return this->isLoading;
-}
-
 sf::Vector2f gui::Graph::getPosition()
 {
 	return this->background.getPosition();
@@ -890,10 +874,6 @@ void gui::Graph::setPosition(float x, float y)
 	this->background.setPosition(sf::Vector2f(x, y));
 }
 
-void gui::Graph::setLoading(bool value)
-{
-	this->isLoading = value;
-}
 
 void gui::Graph::setBackgroundColor(sf::Color background, sf::Color margin)
 {
@@ -964,9 +944,6 @@ void gui::Graph::render(sf::RenderTarget * target)
 {
 	target->draw(this->background);
 	target->draw(this->background2);
-
-	if (this->isLoading)
-		target->draw(this->loadingText);
 
 	for (unsigned int i = 0; i < this->text.size(); i++)
 	{
