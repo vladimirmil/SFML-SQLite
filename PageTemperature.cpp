@@ -62,7 +62,7 @@ void PageTemperature::loadDatabaseData()
 			std::string temp = "ID=";
 			temp.append(std::to_string(i));
 			db->selectData(dbLocation->at(0).c_str(), data, dbLocation->at(1).c_str(), temp);
-
+			this->strX.push_back(data[0].second);
 			this->Y.push_back(std::stof(data[2].second));
 		}
 	}
@@ -70,7 +70,7 @@ void PageTemperature::loadDatabaseData()
 
 void PageTemperature::initGUI()
 {
-	this->graphs["GRAPH"] = new gui::Graph(&this->font, "Temperature [ °C ]", this->Y, 60.f, -20.f, 235.f, 60.f, 934.f, 620.f, 20.f);
+	this->graphs["GRAPH"] = new gui::Graph(&this->font, "Temperature [ °C ]", this->strX, this->Y, 60.f, -20.f, 235.f, 60.f, 934.f, 620.f, 20.f);
 	this->graphs["GRAPH"]->setGraphColor(sf::Color(240, 0, 85, 255), sf::Color(243, 0, 32, 255));
 }
 
@@ -84,6 +84,9 @@ void PageTemperature::updateGUI()
 void PageTemperature::updateInput()
 {
 	for (auto &i : this->buttons)
+		i.second->updateEvent(this->ev, this->mousePositionView);
+
+	for (auto &i : this->graphs)
 		i.second->updateEvent(this->ev, this->mousePositionView);
 }
 

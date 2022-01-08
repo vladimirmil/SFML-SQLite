@@ -215,28 +215,39 @@ namespace gui
 
 	class Graph {
 	private:
-		sf::RectangleShape background, background2;
+		sf::RectangleShape background, background2, pointsTextBackground;
 		sf::Font* font;
 		sf::VertexArray lines;
 		sf::Color lineColor, pointsColor;
+		sf::Text pointText;
+		std::vector<sf::ConvexShape*> pointsBackground;
 		std::vector<sf::Text*> text;
 		std::vector<sf::CircleShape*> points;
 		std::vector<sf::Vector2f> pointsPositions;
-		std::vector<float> inputVectorX, inputVectorY;		
+		std::vector<float> inputVectorX, inputVectorY, origX, origY;
+		std::vector<std::string> stringAxisX;
 		int numberOfPoints;
 		float spacing, margin, minY, maxY, minX, maxX, x, y, width, height;
+		bool isPointBackgroundVisible, isHoveringPoint, isXNumeric;
 		// Init
 		void initVariables(float x, float y, float height, float width, float margin, std::vector<float> inputVectorX, std::vector<float> inputVectorY);
 		void initBackground(sf::Color color, sf::Color color2);
 		void initText(sf::Font * font, std::string text);
-		void initGraph();
+		void initGraphSingleInput(float min, float max);
+		void initGraphDoubleFloatInput();
 	public:
-		// No input, pos, size, margin
-		Graph(sf::Font* font, std::string title, float x, float y, float width, float height, float margin);
-		// Single input vector, x axis auto, min, max, pos, size, marhin (manual scaling)
-		Graph(sf::Font* font, std::string title, std::vector<float> inputVectorY, float max, float min, float x, float y, float width, float height, float margin);
-		// Input x and y, pos, size, margin (scaled to min and max of input)
-		Graph(sf::Font* font, std::string title, std::vector<float> inputVectorX, std::vector<float> inputVectorY, float x, float y, float width, float height, float margin);
+		// Single input vector float, min, max, pos, size, margin (x axis auto scaling)
+		Graph(sf::Font* font, std::string title, std::vector<float> inputVectorY, float max, float min, 
+			float x, float y, float width, float height, float margin);
+
+		// X string (DATE), Y float, min, max, pos, size, margin (x axis auto scaling)
+		Graph(sf::Font* font, std::string title, std::vector<std::string> inputVectorX, std::vector<float> inputVectorY, 
+			float max, float min, float x, float y, float width, float height, float margin);
+
+		// Input x and y, pos, size, margin (graph is scaled to min and max values of input)
+		Graph(sf::Font* font, std::string title, std::vector<float> inputVectorX, std::vector<float> inputVectorY, 
+			float x, float y, float width, float height, float margin);
+
 		virtual ~Graph();
 
 		// Set
@@ -244,14 +255,18 @@ namespace gui
 		void setBackgroundColor(sf::Color background, sf::Color margin);
 		void setOutline(sf::Color outline, float thickness);
 		void setGraphColor(sf::Color line, sf::Color points);
+		void setPointBackgroundVisibility(bool value);
 
 		// Get
 		sf::Vector2f getPosition();
+		bool getPointBackgroundVisibility();
 		
 		void clearGraph();
 
 		// Update
 		void updatePoints(float newPoint);
+		void updatePointsBackground();
+		void updateEvent(sf::Event* ev, sf::Vector2f mousePosition);
 
 		// Render
 		void render(sf::RenderTarget* target);

@@ -86,6 +86,9 @@ void Application::pollEvents()
 			break;
 
 		case sf::Event::MouseMoved:
+			if (!this->pages.empty() && this->hasFocus)
+				this->pages.front()->updateInput();
+
 			this->titlebar->updateWindowPosition(this->window);
 			break;
 

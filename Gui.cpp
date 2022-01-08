@@ -40,8 +40,8 @@ void gui::Button::initText(sf::Font * font, std::string text)
 	this->text.setFillColor(this->idleTextColor);
 	this->text.setCharacterSize(this->textSize);
 	this->text.setPosition(
-		(int)this->shape.getPosition().x + (int)(shape.getGlobalBounds().width / 2.f) - (int)(this->text.getGlobalBounds().width / 2.f),
-		(int)this->shape.getPosition().y + (int)(shape.getGlobalBounds().height / 2.f) - (int)(this->text.getGlobalBounds().height / 2.f) - 3
+		(int)(this->shape.getPosition().x + (this->shape.getGlobalBounds().width / 2.f) - (this->text.getGlobalBounds().width / 2.f)),
+		(int)(this->shape.getPosition().y + (this->shape.getGlobalBounds().height / 2.f) - (this->text.getGlobalBounds().height / 2.f) - 3)
 	);
 }
 
@@ -190,7 +190,7 @@ void gui::Button::setOutlineThickness(float thickness)
 	this->shape.setOutlineThickness(thickness);
 }
 
-// Called from event loop
+// Called from event loop trought updateInput() in parent
 void gui::Button::updateEvent(sf::Event * ev, sf::Vector2f mousePosition)
 {
 	if (this->shape.getGlobalBounds().contains(mousePosition) && ev->mouseButton.button == sf::Mouse::Left)
@@ -688,8 +688,11 @@ void gui::Graph::initVariables(float x, float y, float height, float width, floa
 	this->margin = margin;
 	this->inputVectorX = inputVectorX;
 	this->inputVectorY = inputVectorY;
+	this->origY = inputVectorY;
+	this->origX = inputVectorX;
 	this->lineColor = sf::Color::Color::White;
 	this->pointsColor = sf::Color::Color::White;
+	this->isPointBackgroundVisible = true;
 }
 
 
@@ -704,11 +707,14 @@ void gui::Graph::initBackground(sf::Color color1, sf::Color color2)
 	this->background.setOutlineThickness(2);
 	this->background.setOutlineColor(sf::Color(38, 54, 64, 255));
 	this->background2.setPosition(sf::Vector2f(this->x + this->margin, this->y + this->margin));
+
+	this->pointsTextBackground.setFillColor(sf::Color(30, 30, 30, 150));
 }
 
 void gui::Graph::initText(sf::Font * font, std::string text)
 {
 	this->font = font;
+	this->pointText.setFont(*this->font);
 	for (unsigned int i = 0; i < 5; i++)
 	{
 		this->text.push_back(new sf::Text);
@@ -744,7 +750,43 @@ void gui::Graph::initText(sf::Font * font, std::string text)
 	);
 }
 
-void gui::Graph::initGraph()
+void gui::Graph::initGraphSingleInput(float min, float max)
+{
+	if (this->inputVectorY.size() != 0)
+	{
+		this->numberOfPoints = this->inputVectorY.size();
+		this->spacing = (this->width - 2 * this->margin) / (this->numberOfPoints - 1);
+		this->minY = min;
+		this->maxY = max;
+
+		//init lines 
+		this->lines = sf::VertexArray(sf::LineStrip, this->numberOfPoints);
+
+		for (int i = 0; i < this->numberOfPoints; i++)
+		{
+			// add new point
+			this->points.push_back(new sf::CircleShape);
+			// populate vector
+			this->pointsPositions.push_back(sf::Vector2f(0, 0));
+			// normalize input vectors 0-1
+			this->inputVectorY[i] = ((this->inputVectorY[i] - this->minY) / (this->maxY - this->minY));
+			// scale values. 1 being the maximum. top left is 0,0 so 1-(...) at Y to invert it
+			this->pointsPositions[i].y = ((1 - this->inputVectorY[i])) * (this->height - 2 * margin) + this->y + margin;
+			// equal distance from points at x axis
+			this->pointsPositions[i].x = this->spacing * i + this->x + this->margin;
+
+			this->points[i]->setPosition(this->pointsPositions[i]);
+			this->points[i]->setRadius(4.f);
+			this->points[i]->setFillColor(this->pointsColor);
+			this->points[i]->setPointCount(50);
+
+			this->lines[i].color = this->lineColor;
+			this->lines[i].position = sf::Vector2f(this->pointsPositions[i].x + 2.f, this->pointsPositions[i].y + 2.f);
+		}
+	}
+}
+
+void gui::Graph::initGraphDoubleFloatInput()
 {
 	if (this->inputVectorX.size() == this->inputVectorY.size() && this->inputVectorX.size() != 0)
 	{
@@ -773,85 +815,67 @@ void gui::Graph::initGraph()
 			this->pointsPositions[i].y = (1 - (this->inputVectorY[i])) * (this->height - 2 * this->margin) + this->y + this->margin;
 			this->pointsPositions[i].x = this->inputVectorX[i] * (this->width - 2 * this->margin) + this->x + this->margin;
 
-			this->points[i]->setPosition(this->pointsPositions[i] /*sf::Vector2f(this->pointsPositions[i].x, this->pointsPositions[i].y)*/);
+			this->points[i]->setPosition(this->pointsPositions[i]);
 			this->points[i]->setRadius(3.f);
-			//this->points[i]->setFillColor(sf::Color::Red);
 			this->points[i]->setFillColor(this->lineColor);
 			this->points[i]->setPointCount(50);
-			//this->lines[i].color = sf::Color::Red;
 			this->lines[i].color = this->lineColor;
 			this->lines[i].position = sf::Vector2f(this->pointsPositions[i].x + 2.f, this->pointsPositions[i].y + 2.f);
 		}
-
 	}
-}
-
-gui::Graph::Graph(sf::Font * font, std::string title, float x, float y, float width, float height, float margin)
-{
-	this->x = x;
-	this->y = y;
-	this->height = height;
-	this->width = width;
-	this->margin = margin;
-	this->initBackground(sf::Color(36, 52, 62, 255), sf::Color(38, 54, 64, 255));
-	this->font = font;
-	this->initText(font, title);
 }
 
 gui::Graph::Graph(sf::Font * font, std::string title, std::vector<float> inputVectorY, float max, float min, float x, float y, float width, float height, float margin)
 {
+	this->isXNumeric = false;
+	this->isPointBackgroundVisible = true;
 	this->x = x;
 	this->y = y;
 	this->height = height;
 	this->width = width;
 	this->margin = margin;
 	this->inputVectorY = inputVectorY;
+	this->origY = inputVectorY;
 	this->lineColor = sf::Color::Color::White;
 	this->pointsColor = sf::Color::Color::White;
 
 	this->initBackground(sf::Color(36, 52, 62, 255), sf::Color(38, 54, 64, 255));
+	this->initGraphSingleInput(min, max);
+	this->updatePointsBackground();
+	this->initText(font, title);
+}
 
-	if (this->inputVectorY.size() != 0)
-	{
-		this->numberOfPoints = this->inputVectorY.size();
-		this->spacing = (width - 2 * this->margin) / (this->numberOfPoints - 1);
-		this->minY = min;
-		this->maxY = max;
+gui::Graph::Graph(sf::Font * font, std::string title, std::vector<std::string> inputVectorX, std::vector<float> inputVectorY, 
+	float max, float min, float x, float y, float width, float height, float margin)
+{
+	this->isXNumeric = false;
+	this->isHoveringPoint = false;
+	this->isPointBackgroundVisible = true;
+	this->x = x;
+	this->y = y;
+	this->height = height;
+	this->width = width;
+	this->margin = margin;
+	this->inputVectorY = inputVectorY;
+	this->stringAxisX = inputVectorX;
+	this->origY = inputVectorY;
+	this->lineColor = sf::Color::Color::White;
+	this->pointsColor = sf::Color::Color::White;
 
-		//init lines 
-		this->lines = sf::VertexArray(sf::LineStrip, this->numberOfPoints);
-
-		for (int i = 0; i < this->numberOfPoints; i++)
-		{
-			// add new point
-			this->points.push_back(new sf::CircleShape);
-			// populate vector
-			this->pointsPositions.push_back(sf::Vector2f(0, 0));
-			// normalize input vectors 0-1
-			this->inputVectorY[i] = ((this->inputVectorY[i] - this->minY) / (this->maxY - this->minY));
-			// scale values. 1 being the maximum. top left is 0,0 so 1-(...) at Y to invert it
-			this->pointsPositions[i].y = ((1 - this->inputVectorY[i])) * (this->height - 2 * margin) + this->y + margin;
-			// equal distance from points at x axis
-			this->pointsPositions[i].x = this->spacing * i + this->x + this->margin;
-
-			this->points[i]->setPosition(this->pointsPositions[i]);
-			this->points[i]->setRadius(3.f);
-			this->points[i]->setFillColor(this->pointsColor);
-			this->points[i]->setPointCount(50);
-
-			this->lines[i].color = this->lineColor;
-			this->lines[i].position = sf::Vector2f(this->pointsPositions[i].x + 2.f, this->pointsPositions[i].y + 2.f);
-		}
-	}
+	this->initBackground(sf::Color(36, 52, 62, 255), sf::Color(38, 54, 64, 255));
+	this->initGraphSingleInput(min, max);
+	this->updatePointsBackground();
 	this->initText(font, title);
 }
 
 gui::Graph::Graph(sf::Font * font, std::string title, std::vector<float> inputVectorX, std::vector<float> inputVectorY, float x, float y,
 				float width, float height, float margin)
 {
+	this->isXNumeric = true;
 	this->initVariables(x, y, height, width, margin, inputVectorX, inputVectorY);
 	this->initBackground(sf::Color(36, 52, 62, 255), sf::Color(38, 54, 64, 255));
-	this->initGraph();
+	this->initGraphDoubleFloatInput();
+	this->updatePointsBackground();
 	this->initText(font, title);
 }
 
@@ -859,6 +883,9 @@ gui::Graph::~Graph()
 {
 	for (unsigned int i = 0; i < this->points.size(); i++)
 		delete points[i];
+
+	for (unsigned int i = 0; i < this->pointsBackground.size(); i++)
+		delete pointsBackground[i];
 
 	for (unsigned int i = 0; i < this->text.size(); i++)
 		delete text[i];
@@ -869,11 +896,15 @@ sf::Vector2f gui::Graph::getPosition()
 	return this->background.getPosition();
 }
 
+bool gui::Graph::getPointBackgroundVisibility()
+{
+	return this->isPointBackgroundVisible;
+}
+
 void gui::Graph::setPosition(float x, float y)
 {
 	this->background.setPosition(sf::Vector2f(x, y));
 }
-
 
 void gui::Graph::setBackgroundColor(sf::Color background, sf::Color margin)
 {
@@ -891,6 +922,11 @@ void gui::Graph::setGraphColor(sf::Color line, sf::Color points)
 	}
 }
 
+void gui::Graph::setPointBackgroundVisibility(bool value)
+{
+	this->isPointBackgroundVisible = value;
+}
+
 void gui::Graph::setOutline(sf::Color outline, float thickness)
 {
 	this->background.setOutlineColor(outline);
@@ -906,6 +942,7 @@ void gui::Graph::clearGraph()
 	this->pointsPositions.clear();
 	this->inputVectorX.clear();
 	this->inputVectorY.clear();
+	this->origY.clear();
 }
 
 void gui::Graph::updatePoints(float newPoint)
@@ -915,11 +952,13 @@ void gui::Graph::updatePoints(float newPoint)
 	for (unsigned int i = 0; i < this->inputVectorY.size() - 1; i++)
 	{
 		this->inputVectorY[i] = this->inputVectorY[j];
+		this->origY[i] = this->origY[j];
 		j++;
 	}
 
 	// Normalize new value and replace last value of the input vector with this new value
 	this->inputVectorY[this->inputVectorY.size() - 1] = ((newPoint - this->minY) / (this->maxY - this->minY));
+	this->origY[this->origY.size() - 1] = newPoint;
 
 	// Update points
 	for (int i = 0; i < this->numberOfPoints; i++)
@@ -937,6 +976,98 @@ void gui::Graph::updatePoints(float newPoint)
 		this->lines[i].color = this->lineColor;
 		this->lines[i].position = sf::Vector2f(this->pointsPositions[i].x + 2.f, this->pointsPositions[i].y + 2.f);
 	}
+
+	this->updatePointsBackground();
+}
+
+void gui::Graph::updatePointsBackground()
+{
+	// that background thingy bellow graph lines
+	for (int i = 0; i < this->numberOfPoints - 1; i++)
+	{
+		this->pointsBackground.push_back(new sf::ConvexShape);
+		this->pointsBackground[i]->setPointCount(4);
+		this->pointsBackground[i]->setFillColor(sf::Color(220, 0, 45, 20));
+
+		//*.
+		//..
+		this->pointsBackground[i]->setPoint(0, sf::Vector2f(
+			this->pointsPositions[i].x,
+			this->pointsPositions[i].y + 5
+		));
+
+		//.*
+		//..
+		this->pointsBackground[i]->setPoint(1, sf::Vector2f(
+			this->pointsPositions[i + 1].x,
+			this->pointsPositions[i + 1].y + 5
+		));
+
+		//..
+		//.*
+		this->pointsBackground[i]->setPoint(2, sf::Vector2f(
+			this->pointsPositions[i + 1].x,
+			this->y + this->background.getSize().y - this->margin
+		));
+
+		//..
+		//*.
+		this->pointsBackground[i]->setPoint(3, sf::Vector2f(
+			this->pointsPositions[i].x,
+			this->y + this->background.getSize().y - this->margin
+		));
+	}
+}
+
+void gui::Graph::updateEvent(sf::Event* ev, sf::Vector2f mousePosition)
+{
+	std::string temp = "";
+
+	this->pointText.setPosition(sf::Vector2f(
+		this->x + this->background.getSize().x - this->margin - this->pointText.getGlobalBounds().width, 
+		this->y + this->background.getSize().y - this->margin - this->pointText.getGlobalBounds().height)
+	);
+	this->pointText.setCharacterSize(12);
+	this->pointText.Bold;
+	this->pointText.setOutlineThickness(1);
+	this->pointText.setOutlineColor(sf::Color::Black);
+	this->pointText.setFillColor(sf::Color::White);
+
+	for (unsigned int i = 0; i < this->points.size(); i++)
+	{
+		if (this->points[i]->getGlobalBounds().contains(mousePosition))
+		{
+			if (this->isXNumeric)
+				temp = std::to_string(this->origY[i]) + "\n" + std::to_string(this->origX[i]);
+			else
+				temp = std::to_string(this->origY[i]) + "\n" + stringAxisX[i];
+
+			this->pointText.setString(temp);
+
+			this->pointText.setPosition(sf::Vector2f(
+				(int)(this->points[i]->getPosition().x - this->pointText.getGlobalBounds().width / 2),
+				(int)(this->points[i]->getPosition().y - 1.2 * this->pointText.getGlobalBounds().height)
+			));
+
+			this->pointsTextBackground.setPosition(this->pointText.getPosition().x - 4, this->pointText.getPosition().y - 4);
+			this->pointsTextBackground.setSize(sf::Vector2f(
+				this->pointText.getGlobalBounds().width + 8,
+				this->pointText.getGlobalBounds().height + 8
+			));
+
+			this->isHoveringPoint = true;
+
+			break;
+		}
+
+		if (!this->points[i]->getGlobalBounds().contains(mousePosition))
+		{
+			this->pointText.setString("");
+			this->isHoveringPoint = false;
+		}
+			
+
+	}
 }
 
 
@@ -944,17 +1075,26 @@ void gui::Graph::render(sf::RenderTarget * target)
 {
 	target->draw(this->background);
 	target->draw(this->background2);
-
+	
 	for (unsigned int i = 0; i < this->text.size(); i++)
-	{
 		target->draw(*this->text[i]);
-	}
 
 	for (unsigned int i = 0; i < this->points.size(); i++)
 	{
 		target->draw(*this->points[i]);
-		target->draw(lines);
+		target->draw(this->lines);
 	}
+	
+	if (isPointBackgroundVisible)
+		for (unsigned int i = 0; i < this->pointsBackground.size(); i++)
+			target->draw(*pointsBackground[i]);
+	
+	if (this->isHoveringPoint)
+	{
+		target->draw(this->pointsTextBackground);
+		target->draw(this->pointText);
+	}
+	
 }
 
 /**************************************************************************

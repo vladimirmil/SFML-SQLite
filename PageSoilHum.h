@@ -25,6 +25,7 @@ private:
 	std::map<std::string, gui::Label*> labels;
 	std::map<std::string, gui::Graph*> graphs;
 	std::vector<float> Y;
+	std::vector<std::string> strX;
 	int lastIndex;
 
 	sf::RectangleShape background;

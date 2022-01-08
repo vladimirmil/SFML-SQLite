@@ -61,6 +61,7 @@ void PageHome::loadDatabaseData()
 			std::string temp = "ID=";
 			temp.append(std::to_string(i));
 			db->selectData(dbLocation->at(0).c_str(), data, dbLocation->at(1).c_str(), temp);
+			this->strX.push_back(data[0].second);
 			this->Y1.push_back(std::stof(data[2].second));
 			this->Y2.push_back(std::stof(data[3].second));
 			this->Y3.push_back(std::stof(data[4].second));
@@ -71,10 +72,11 @@ void PageHome::loadDatabaseData()
 
 void PageHome::initGUI()
 {
-	this->graphs["GRAPH_TEMP"] = new gui::Graph(&this->font, "Temperature [ °C ]", this->Y1, 60.f, -20.f, 235.f, 60.f, 460.f, 300.f, 20.f);
-	this->graphs["GRAPH_LUMI"] = new gui::Graph(&this->font, "Ambient light intensity [ mW/cm2 ]", this->Y2, 300.f, 0.f, 710.f, 60.f, 459.5f, 300.f, 20.f);
-	this->graphs["GRAPH_AHUM"] = new gui::Graph(&this->font, "Air humidity [ % ]", this->Y3, 100.f, 0.f, 235.f, 380.f, 460.f, 300.f, 20.f);
-	this->graphs["GRAPH_SHUM"] = new gui::Graph(&this->font, "Soil humidity [ % ]", this->Y4, 100.f, 0.f, 710.f, 380.f, 459.5f, 300.f, 20.f);
+	
+	this->graphs["GRAPH_TEMP"] = new gui::Graph(&this->font, "Temperature [ °C ]", this->strX, this->Y1, 60.f, -20.f, 235.f, 60.f, 460.f, 300.f, 20.f);
+	this->graphs["GRAPH_LUMI"] = new gui::Graph(&this->font, "Ambient light intensity [ mW/cm2 ]", this->strX, this->Y2, 300.f, 0.f, 710.f, 60.f, 459.5f, 300.f, 20.f);
+	this->graphs["GRAPH_AHUM"] = new gui::Graph(&this->font, "Air humidity [ % ]", this->strX, this->Y3, 100.f, 0.f, 235.f, 380.f, 460.f, 300.f, 20.f);
+	this->graphs["GRAPH_SHUM"] = new gui::Graph(&this->font, "Soil humidity [ % ]", this->strX, this->Y4, 100.f, 0.f, 710.f, 380.f, 459.5f, 300.f, 20.f);
 	
 	this->graphs["GRAPH_TEMP"]->setGraphColor(sf::Color(240, 0, 85, 255), sf::Color(240, 0, 85, 255));
 	this->graphs["GRAPH_LUMI"]->setGraphColor(sf::Color(240, 0, 85, 255), sf::Color(240, 0, 85, 255));
@@ -92,6 +94,9 @@ void PageHome::updateGUI()
 void PageHome::updateInput()
 {
 	for (auto &i : this->buttons)
+		i.second->updateEvent(this->ev, this->mousePositionView);
+
+	for (auto &i : this->graphs)
 		i.second->updateEvent(this->ev, this->mousePositionView);
 }
 
